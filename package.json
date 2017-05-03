@@ -1,0 +1,82 @@
+{
+  "name": "ng-jsonapi",
+  "version": "0.0.1",
+  "description": "Angular JSON API adapter",
+  "main": "dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist src/compiled && tslint src/**/*.ts && ngc",
+    "lint": "tslint src/**/*.ts",
+    "pretest": "npm run build",
+    "test": "karma start",
+    "prepublish": "ngc",
+    "ngc": "ngc",
+    "servetest": "npm run pretest & karma start karma.dev.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KaDee/ng-jsonapi.git"
+  },
+  "keywords": [
+    "angular4",
+    "json",
+    "api",
+    "jsonapi"
+  ],
+  "author": "Kris Dekeyser <kris@dva.be>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/KaDee/ng-jsonapi/issues"
+  },
+  "homepage": "https://github.com/KaDee/ng-jsonapi#readme",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1"
+  },
+  "peerDependencies": {
+    "@angular/http": "4.x",
+    "@angular/core": "4.x",
+    "reflect-metadata": "0.x",
+    "rxjs": "5.x"
+  },
+  "devDependencies": {
+    "@angular/common": "^4.1.0",
+    "@angular/compiler": "^4.1.0",
+    "@angular/compiler-cli": "^4.1.0",
+    "@angular/core": "^4.1.0",
+    "@angular/http": "^4.1.0",
+    "@angular/platform-browser": "^4.1.0",
+    "@angular/platform-browser-dynamic": "^4.1.0",
+    "@angular/platform-server": "^4.1.0",
+    "@types/jasmine": "^2.5.47",
+    "@types/lodash": "^4.14.63",
+    "@types/reflect-metadata": "^0.0.5",
+    "@types/selenium-webdriver": "^2.53.40",
+    "codelyzer": "^3.0.1",
+    "core-js": "^2.4.1",
+    "coveralls": "^2.13.1",
+    "jasmine-core": "^2.6.1",
+    "karma": "^1.6.0",
+    "karma-chrome-launcher": "^2.1.0",
+    "karma-coverage": "^1.1.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "karma-remap-istanbul": "^0.6.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-spec-reporter": "^0.0.31",
+    "karma-webpack": "^2.0.3",
+    "phantomjs-prebuilt": "^2.1.14",
+    "reflect-metadata": "^0.1.10",
+    "rimraf": "^2.6.1",
+    "rxjs": "^5.3.1",
+    "sourcemap-istanbul-instrumenter-loader": "^0.2.0",
+    "ts-loader": "^2.0.3",
+    "tslint": "^5.1.0",
+    "typescript": "^2.3.2",
+    "webpack": "^1.15.0",
+    "zone.js": "^0.8.9"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  }
+}

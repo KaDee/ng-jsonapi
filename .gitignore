@@ -1,0 +1,32 @@
+# Node
+node_modules/*
+npm-debug.log
+
+# TypeScript
+*.js
+*.map
+*.d.ts
+*.metadata.json
+src/compiled
+
+# JetBrains
+.idea
+.project
+.settings
+.idea/*
+*.iml
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+**/.DS_Store
+
+# But not these:
+!*.conf.js
+
+/coverage
+
+!dist/**/*.*
