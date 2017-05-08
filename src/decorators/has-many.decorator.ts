@@ -3,7 +3,8 @@ export function HasMany(config: any = {}) {
     let annotations = Reflect.getMetadata('HasMany', target) || [];
     annotations.push({
       propertyName: propertyName,
-      relationship: config.key || propertyName
+      relationship: config.key || propertyName,
+      link: config.link || null
     });
     Reflect.defineMetadata('HasMany', annotations, target);
   };
