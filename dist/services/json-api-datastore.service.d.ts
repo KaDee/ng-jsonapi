@@ -14,12 +14,6 @@ export declare class JsonApiDatastore {
     private http;
     private _headers;
     private _store;
-    private static getRelationships(data);
-    protected static handleError(error: any): ErrorObservable;
-    private static toQueryString(params);
-    private static makeUrl(url, params?);
-    private static fromArrayToHash(models);
-    private static resetMetadataAttributes<T>(res, attributesMetadata, modelType);
     constructor(http: Http);
     query<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, headers?: Headers): Observable<CollectionModel<T>>;
     hasManyLink<T extends JsonApiModel>(modelType: ModelType<T>, url: string, params?: any, headers?: Headers): Observable<CollectionModel<T>>;
@@ -32,10 +26,16 @@ export declare class JsonApiDatastore {
     peekAll<T extends JsonApiModel>(modelType: ModelType<T>): T[];
     headers: Headers;
     private buildUrl<T>(modelType, params?, id?);
+    private static makeUrl(url, params?);
+    private static toQueryString(params);
     private extractQueryData<T>(res, modelType);
     private extractRecordData<T>(res, modelType, model?);
     private getOptions(customHeaders?);
     addToStore(models: JsonApiModel | JsonApiModel[]): void;
     private updateRelationships(model, relationships);
+    private static getRelationships(data);
+    protected static handleError(error: any): ErrorObservable;
+    private static fromArrayToHash(models);
+    private static resetMetadataAttributes<T>(res, attributesMetadata, modelType);
     setBaseUrl(baseUrl: string): void;
 }

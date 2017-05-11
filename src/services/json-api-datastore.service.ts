@@ -23,96 +23,6 @@ export class JsonApiDatastore {
   private _headers: Headers;
   private _store: any = {};
 
-  private static getRelationships(data: any): any {
-    let relationships: any = {};
-    for (let key in data) {
-      if (data.hasOwnProperty(key)) {
-        if (data[key] instanceof JsonApiModel) {
-          let relationshipType: string = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
-          relationships[key] = {
-            data: {
-              type: relationshipType,
-              id: data[key].id
-            }
-          };
-        }
-      }
-    }
-    return relationships;
-  }
-
-  protected static handleError(error: any): ErrorObservable {
-    let errMsg: string = (error.message) ? error.message :
-        error.status ? `${error.status} - ${error.statusText}` : 'Server error';
-    try {
-      let body: any = error.json();
-      if (body.errors && body.errors instanceof Array) {
-        let errors: ErrorResponse = new ErrorResponse(body.errors);
-        console.error(errMsg, errors);
-        return Observable.throw(errors);
-      }
-    } catch (e) {
-      // no valid JSON
-    }
-
-    console.error(errMsg);
-    return Observable.throw(errMsg);
-  }
-
-  private static toQueryString(params: any) {
-    let encodedStr = '';
-    for (let key in params) {
-      if (params.hasOwnProperty(key)) {
-        if (encodedStr && encodedStr[encodedStr.length - 1] !== '&') {
-          encodedStr = encodedStr + '&';
-        }
-        let value: any = params[key];
-        if (value instanceof Array) {
-          for (let i = 0; i < value.length; i++) {
-            encodedStr = encodedStr + key + '=' + encodeURIComponent(value[i]) + '&';
-          }
-        } else if (typeof value === 'object') {
-          for (let innerKey in value) {
-            if (value.hasOwnProperty(innerKey)) {
-              encodedStr = encodedStr + key + '[' + innerKey + ']=' + encodeURIComponent(value[innerKey]) + '&';
-            }
-          }
-        } else {
-          encodedStr = encodedStr + key + '=' + encodeURIComponent(value);
-        }
-      }
-    }
-    if (encodedStr[encodedStr.length - 1] === '&') {
-      encodedStr = encodedStr.substr(0, encodedStr.length - 1);
-    }
-    return encodedStr;
-  }
-
-  private static makeUrl(url: string, params?: any): string {
-    return [url, (params ? '?' : ''), JsonApiDatastore.toQueryString(params)].join('');
-  }
-
-  private static fromArrayToHash(models: JsonApiModel | JsonApiModel[]): any {
-    let modelsArray: JsonApiModel[] = models instanceof Array ? models : [models];
-    return _.keyBy(modelsArray, 'id');
-  }
-
-  //noinspection JSUnusedLocalSymbols
-  private static resetMetadataAttributes<T extends JsonApiModel>(res: any, attributesMetadata: any, modelType: ModelType<T>) {
-    attributesMetadata = res[AttributeMetadata];
-    for (let propertyName in attributesMetadata) {
-      if (attributesMetadata.hasOwnProperty(propertyName)) {
-        let metadata: any = attributesMetadata[propertyName];
-        if (metadata.hasDirtyAttributes) {
-          metadata.hasDirtyAttributes = false;
-        }
-      }
-    }
-
-    res[AttributeMetadata] = attributesMetadata;
-    return res;
-  }
-
   constructor(private http: Http) {
   }
 
@@ -125,7 +35,7 @@ export class JsonApiDatastore {
   }
 
   hasManyLink<T extends JsonApiModel>(
-      modelType: ModelType<T>, url: string, params?: any, headers?: Headers): Observable<CollectionModel<T>> {
+    modelType: ModelType<T>, url: string, params?: any, headers?: Headers): Observable<CollectionModel<T>> {
     let options: RequestOptions = this.getOptions(headers);
     let _url = JsonApiDatastore.makeUrl(url, params);
     return this.http.get(_url, options)
@@ -171,7 +81,6 @@ export class JsonApiDatastore {
     let body: any = {
       data: {
         type: typeName,
-        id: model.id,
         attributes: dirtyData,
         relationships: relationships
       }
@@ -214,6 +123,39 @@ export class JsonApiDatastore {
     let baseUrl: string = Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
     let idToken: string = id ? `/${id}` : null;
     return JsonApiDatastore.makeUrl([baseUrl, typeName, idToken].join(''), params);
+  }
+
+  private static makeUrl(url: string, params?: any): string {
+    return [url, (params ? '?' : ''), JsonApiDatastore.toQueryString(params)].join('');
+  }
+
+  private static toQueryString(params: any) {
+    let encodedStr = '';
+    for (let key in params) {
+      if (params.hasOwnProperty(key)) {
+        if (encodedStr && encodedStr[encodedStr.length - 1] !== '&') {
+          encodedStr = encodedStr + '&';
+        }
+        let value: any = params[key];
+        if (value instanceof Array) {
+          for (let i = 0; i < value.length; i++) {
+            encodedStr = encodedStr + key + '=' + encodeURIComponent(value[i]) + '&';
+          }
+        } else if (typeof value === 'object') {
+          for (let innerKey in value) {
+            if (value.hasOwnProperty(innerKey)) {
+              encodedStr = encodedStr + key + '[' + innerKey + ']=' + encodeURIComponent(value[innerKey]) + '&';
+            }
+          }
+        } else {
+          encodedStr = encodedStr + key + '=' + encodeURIComponent(value);
+        }
+      }
+    }
+    if (encodedStr[encodedStr.length - 1] === '&') {
+      encodedStr = encodedStr.substr(0, encodedStr.length - 1);
+    }
+    return encodedStr;
   }
 
   private extractQueryData<T extends JsonApiModel>(res: any, modelType: ModelType<T>): CollectionModel<T> {
@@ -300,6 +242,63 @@ export class JsonApiDatastore {
     }
     return model;
   };
+
+  private static getRelationships(data: any): any {
+    let relationships: any = {};
+    for (let key in data) {
+      if (data.hasOwnProperty(key)) {
+        if (data[key] instanceof JsonApiModel) {
+          let relationshipType: string = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
+          relationships[key] = {
+            data: {
+              type: relationshipType,
+              id: data[key].id
+            }
+          };
+        }
+      }
+    }
+    return relationships;
+  }
+
+  protected static handleError(error: any): ErrorObservable {
+    let errMsg: string = (error.message) ? error.message :
+      error.status ? `${error.status} - ${error.statusText}` : 'Server error';
+    try {
+      let body: any = error.json();
+      if (body.errors && body.errors instanceof Array) {
+        let errors: ErrorResponse = new ErrorResponse(body.errors);
+        console.error(errMsg, errors);
+        return Observable.throw(errors);
+      }
+    } catch (e) {
+      // no valid JSON
+    }
+
+    console.error(errMsg);
+    return Observable.throw(errMsg);
+  }
+
+  private static fromArrayToHash(models: JsonApiModel | JsonApiModel[]): any {
+    let modelsArray: JsonApiModel[] = models instanceof Array ? models : [models];
+    return _.keyBy(modelsArray, 'id');
+  }
+
+  //noinspection JSUnusedLocalSymbols
+  private static resetMetadataAttributes<T extends JsonApiModel>(res: any, attributesMetadata: any, modelType: ModelType<T>) {
+    attributesMetadata = res[AttributeMetadata];
+    for (let propertyName in attributesMetadata) {
+      if (attributesMetadata.hasOwnProperty(propertyName)) {
+        let metadata: any = attributesMetadata[propertyName];
+        if (metadata.hasDirtyAttributes) {
+          metadata.hasDirtyAttributes = false;
+        }
+      }
+    }
+
+    res[AttributeMetadata] = attributesMetadata;
+    return res;
+  }
 
   public setBaseUrl(baseUrl: string): void {
     Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl = baseUrl;
