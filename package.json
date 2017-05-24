@@ -1,6 +1,6 @@
 {
   "name": "ng-jsonapi",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Angular JSON API adapter",
   "main": "dist/index.js",
   "typings": "./dist/index.d.ts",

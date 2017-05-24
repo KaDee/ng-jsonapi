@@ -1,4 +1,4 @@
-import { Http, Headers, Response } from '@angular/http';
+import { Http, Headers, RequestOptions, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import 'rxjs/add/operator/map';
@@ -11,7 +11,7 @@ export declare type ModelType<T extends JsonApiModel> = {
     new (datastore: JsonApiDatastore, data: any): T;
 };
 export declare class JsonApiDatastore {
-    private http;
+    protected http: Http;
     private _headers;
     private _store;
     constructor(http: Http);
@@ -25,17 +25,18 @@ export declare class JsonApiDatastore {
     peekRecord<T extends JsonApiModel>(modelType: ModelType<T>, id: string): T;
     peekAll<T extends JsonApiModel>(modelType: ModelType<T>): T[];
     headers: Headers;
+    addToStore(models: JsonApiModel | JsonApiModel[]): void;
     private buildUrl<T>(modelType, params?, id?);
-    private static makeUrl(url, params?);
-    private static toQueryString(params);
+    static makeUrl(url: string, params?: any): string;
+    static toQueryString(params: any): string;
     private extractQueryData<T>(res, modelType);
     private extractRecordData<T>(res, modelType, model?);
-    private getOptions(customHeaders?);
-    addToStore(models: JsonApiModel | JsonApiModel[]): void;
+    getOptions(customHeaders?: Headers): RequestOptions;
     private updateRelationships(model, relationships);
     private static getRelationships(data);
     protected static handleError(error: any): ErrorObservable;
     private static fromArrayToHash(models);
     private static resetMetadataAttributes<T>(res, attributesMetadata, modelType);
     setBaseUrl(baseUrl: string): void;
+    getBaseUrl(): string;
 }

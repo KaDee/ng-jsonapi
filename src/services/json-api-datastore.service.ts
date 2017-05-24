@@ -23,7 +23,7 @@ export class JsonApiDatastore {
   private _headers: Headers;
   private _store: any = {};
 
-  constructor(private http: Http) {
+  constructor(protected http: Http) {
   }
 
   query<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, headers?: Headers): Observable<CollectionModel<T>> {
@@ -118,6 +118,16 @@ export class JsonApiDatastore {
     this._headers = headers;
   }
 
+  public addToStore(models: JsonApiModel | JsonApiModel[]): void {
+    let model: JsonApiModel = models instanceof Array ? models[0] : models;
+    let type: string = Reflect.getMetadata('JsonApiModelConfig', model.constructor).type;
+    if (!this._store[type]) {
+      this._store[type] = {};
+    }
+    let hash: any = JsonApiDatastore.fromArrayToHash(models);
+    _.extend(this._store[type], hash);
+  }
+
   private buildUrl<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, id?: string): string {
     let typeName: string = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
     let baseUrl: string = Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
@@ -125,11 +135,11 @@ export class JsonApiDatastore {
     return JsonApiDatastore.makeUrl([baseUrl, typeName, idToken].join(''), params);
   }
 
-  private static makeUrl(url: string, params?: any): string {
+  static makeUrl(url: string, params?: any): string {
     return [url, (params ? '?' : ''), JsonApiDatastore.toQueryString(params)].join('');
   }
 
-  private static toQueryString(params: any) {
+  static toQueryString(params: any) {
     let encodedStr = '';
     for (let key in params) {
       if (params.hasOwnProperty(key)) {
@@ -198,7 +208,7 @@ export class JsonApiDatastore {
     return document;
   }
 
-  private getOptions(customHeaders?: Headers): RequestOptions {
+  getOptions(customHeaders?: Headers): RequestOptions {
     let requestHeaders = new Headers();
     requestHeaders.set('Accept', 'application/vnd.api+json');
     requestHeaders.set('Content-Type', 'application/vnd.api+json');
@@ -214,16 +224,6 @@ export class JsonApiDatastore {
       });
     }
     return new RequestOptions({headers: requestHeaders});
-  }
-
-  public addToStore(models: JsonApiModel | JsonApiModel[]): void {
-    let model: JsonApiModel = models instanceof Array ? models[0] : models;
-    let type: string = Reflect.getMetadata('JsonApiModelConfig', model.constructor).type;
-    if (!this._store[type]) {
-      this._store[type] = {};
-    }
-    let hash: any = JsonApiDatastore.fromArrayToHash(models);
-    _.extend(this._store[type], hash);
   }
 
   private updateRelationships(model: JsonApiModel, relationships: any): JsonApiModel {
@@ -303,4 +303,9 @@ export class JsonApiDatastore {
   public setBaseUrl(baseUrl: string): void {
     Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl = baseUrl;
   }
+
+  public getBaseUrl(): string {
+    return Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
+  }
+
 }
