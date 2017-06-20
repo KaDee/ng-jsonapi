@@ -1,14 +1,12 @@
 import { Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
-import { JsonApiDatastore } from '../services/json-api-datastore.service';
 import { LinksModel } from './links.model';
 import { DocumentModel } from './document.model';
 export declare class JsonApiModel {
-    private _datastore;
     id: string;
     private _links;
     [key: string]: any;
-    constructor(_datastore: JsonApiDatastore, data?: any);
+    constructor(data?: any);
     readonly links: LinksModel;
     syncRelationships(data: any, included: any, level: number): void;
     save(params?: any, headers?: Headers): Observable<DocumentModel<this>>;

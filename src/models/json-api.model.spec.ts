@@ -44,7 +44,7 @@ describe('JsonApiModel', () => {
           date_of_birth: '1987-05-25'
         }
       };
-      let author: Author = new Author(datastore, DATA);
+      let author: Author = new Author(DATA);
       expect(author).toBeDefined();
       expect(author.id).toBe('1');
       expect(author.name).toBe('Daniele');
@@ -65,7 +65,7 @@ describe('JsonApiModel', () => {
     let author: Author;
 
     it('should return the object when there is no relationship included', () => {
-      author = new Author(datastore, getAuthorData());
+      author = new Author(getAuthorData());
       expect(author).toBeDefined();
       expect(author.id).toBe(AUTHOR_ID);
       expect(author.name).toBe(AUTHOR_NAME);
@@ -81,7 +81,7 @@ describe('JsonApiModel', () => {
       it('should return the parsed relationships when one is included', () => {
         const BOOK_NUMBER = 4;
         const DATA = getAuthorData('books', BOOK_NUMBER);
-        author = new Author(datastore, DATA);
+        author = new Author(DATA);
         author.syncRelationships(DATA, getIncludedBooks(BOOK_NUMBER), 0);
         expect(author).toBeDefined();
         expect(author.id).toBe(AUTHOR_ID);
@@ -103,7 +103,7 @@ describe('JsonApiModel', () => {
       it('should parse infinite levels of relationships by reference', () => {
         const BOOK_NUMBER = 4;
         const DATA = getAuthorData('books', BOOK_NUMBER);
-        author = new Author(datastore, DATA);
+        author = new Author(DATA);
         datastore.addToStore(author);
         author.syncRelationships(DATA, getIncludedBooks(BOOK_NUMBER), 0);
         author.books.forEach((book: Book, index: number) => {
@@ -120,7 +120,7 @@ describe('JsonApiModel', () => {
         const CHAPTERS_NUMBER = 4;
         const DATA = getAuthorData(REL, BOOK_NUMBER);
         const INCLUDED = getIncludedBooks(BOOK_NUMBER, REL, CHAPTERS_NUMBER);
-        author = new Author(datastore, DATA);
+        author = new Author(DATA);
         author.syncRelationships(DATA, INCLUDED, 0);
         expect(author).toBeDefined();
         expect(author.id).toBe(AUTHOR_ID);

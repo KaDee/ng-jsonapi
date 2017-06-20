@@ -12,7 +12,7 @@ export class JsonApiModel {
   private _links: LinksModel = new LinksModel;
   [key: string]: any;
 
-  constructor(private _datastore: JsonApiDatastore, data?: any) {
+  constructor(data?: any) {
     if (data) {
       this.id = data.id;
       _.extend(this, data.attributes);
@@ -144,16 +144,12 @@ export class JsonApiModel {
       }
       return newObject;
     }
-    return this._datastore.peekRecord<T>(modelType, id);
+    return null;
+    // return this._datastore.peekRecord<T>(modelType, id);
   }
 
   private createOrPeek<T extends this>(modelType: ModelType<T>, data: any): T {
-    let peek = this._datastore.peekRecord<T>(modelType, data.id);
-    if (peek) {
-      return peek;
-    }
-    let newObject: T = new modelType(this._datastore, data);
-    this._datastore.addToStore(newObject);
+    let newObject: T = new modelType(data);
     return newObject;
   }
 

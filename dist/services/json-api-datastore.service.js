@@ -17,6 +17,91 @@ var JsonApiDatastore = (function () {
         this.http = http;
         this._store = {};
     }
+    JsonApiDatastore.makeUrl = function (url, params) {
+        return [url, (params ? '?' : ''), JsonApiDatastore.toQueryString(params)].join('');
+    };
+    JsonApiDatastore.toQueryString = function (params) {
+        var encodedStr = '';
+        for (var key in params) {
+            if (params.hasOwnProperty(key)) {
+                if (encodedStr && encodedStr[encodedStr.length - 1] !== '&') {
+                    encodedStr = encodedStr + '&';
+                }
+                var value = params[key];
+                if (value instanceof Array) {
+                    for (var i = 0; i < value.length; i++) {
+                        encodedStr = encodedStr + key + '=' + encodeURIComponent(value[i]) + '&';
+                    }
+                }
+                else if (typeof value === 'object') {
+                    for (var innerKey in value) {
+                        if (value.hasOwnProperty(innerKey)) {
+                            encodedStr = encodedStr + key + '[' + innerKey + ']=' + encodeURIComponent(value[innerKey]) + '&';
+                        }
+                    }
+                }
+                else {
+                    encodedStr = encodedStr + key + '=' + encodeURIComponent(value);
+                }
+            }
+        }
+        if (encodedStr[encodedStr.length - 1] === '&') {
+            encodedStr = encodedStr.substr(0, encodedStr.length - 1);
+        }
+        return encodedStr;
+    };
+    JsonApiDatastore.getRelationships = function (data) {
+        var relationships = {};
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                if (data[key] instanceof json_api_model_1.JsonApiModel) {
+                    var relationshipType = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
+                    relationships[key] = {
+                        data: {
+                            type: relationshipType,
+                            id: data[key].id
+                        }
+                    };
+                }
+            }
+        }
+        return relationships;
+    };
+    JsonApiDatastore.handleError = function (error) {
+        var errMsg = (error.message) ? error.message :
+            error.status ? error.status + " - " + error.statusText : 'Server error';
+        try {
+            var body = error.json();
+            if (body.errors && body.errors instanceof Array) {
+                var errors = new error_response_model_1.ErrorResponse(body.errors);
+                console.error(errMsg, errors);
+                return Observable_1.Observable.throw(errors);
+            }
+        }
+        catch (e) {
+            // no valid JSON
+        }
+        console.error(errMsg);
+        return Observable_1.Observable.throw(errMsg);
+    };
+    JsonApiDatastore.fromArrayToHash = function (models) {
+        var modelsArray = models instanceof Array ? models : [models];
+        return _.keyBy(modelsArray, 'id');
+    };
+    //noinspection JSUnusedLocalSymbols
+    JsonApiDatastore.resetMetadataAttributes = function (res, attributesMetadata, modelType) {
+        attributesMetadata = res[symbols_1.AttributeMetadata];
+        for (var propertyName in attributesMetadata) {
+            if (attributesMetadata.hasOwnProperty(propertyName)) {
+                var metadata = attributesMetadata[propertyName];
+                if (metadata.hasDirtyAttributes) {
+                    metadata.hasDirtyAttributes = false;
+                }
+            }
+        }
+        res[symbols_1.AttributeMetadata] = attributesMetadata;
+        return res;
+    };
     JsonApiDatastore.prototype.query = function (modelType, params, headers) {
         var _this = this;
         var options = this.getOptions(headers);
@@ -50,7 +135,7 @@ var JsonApiDatastore = (function () {
             .catch(function (res) { return JsonApiDatastore.handleError(res); });
     };
     JsonApiDatastore.prototype.createRecord = function (modelType, data) {
-        return new modelType(this, { attributes: data });
+        return new modelType({ attributes: data });
     };
     JsonApiDatastore.prototype.saveRecord = function (attributesMetadata, model, params, headers) {
         var _this = this;
@@ -122,46 +207,13 @@ var JsonApiDatastore = (function () {
         var idToken = id ? "/" + id : null;
         return JsonApiDatastore.makeUrl([baseUrl, typeName, idToken].join(''), params);
     };
-    JsonApiDatastore.makeUrl = function (url, params) {
-        return [url, (params ? '?' : ''), JsonApiDatastore.toQueryString(params)].join('');
-    };
-    JsonApiDatastore.toQueryString = function (params) {
-        var encodedStr = '';
-        for (var key in params) {
-            if (params.hasOwnProperty(key)) {
-                if (encodedStr && encodedStr[encodedStr.length - 1] !== '&') {
-                    encodedStr = encodedStr + '&';
-                }
-                var value = params[key];
-                if (value instanceof Array) {
-                    for (var i = 0; i < value.length; i++) {
-                        encodedStr = encodedStr + key + '=' + encodeURIComponent(value[i]) + '&';
-                    }
-                }
-                else if (typeof value === 'object') {
-                    for (var innerKey in value) {
-                        if (value.hasOwnProperty(innerKey)) {
-                            encodedStr = encodedStr + key + '[' + innerKey + ']=' + encodeURIComponent(value[innerKey]) + '&';
-                        }
-                    }
-                }
-                else {
-                    encodedStr = encodedStr + key + '=' + encodeURIComponent(value);
-                }
-            }
-        }
-        if (encodedStr[encodedStr.length - 1] === '&') {
-            encodedStr = encodedStr.substr(0, encodedStr.length - 1);
-        }
-        return encodedStr;
-    };
     JsonApiDatastore.prototype.extractQueryData = function (res, modelType) {
         var _this = this;
         var body = res.json();
         var models = [];
         var collection = new collection_model_1.CollectionModel(body);
         body.data.forEach(function (data) {
-            var model = new modelType(_this, data);
+            var model = new modelType(data);
             _this.addToStore(model);
             if (body.included) {
                 model.syncRelationships(data, body.included, 0);
@@ -180,7 +232,7 @@ var JsonApiDatastore = (function () {
             model.id = body.data.id;
             _.extend(model, body.data.attributes);
         }
-        model = model || new modelType(this, body.data);
+        model = model || new modelType(body.data);
         this.addToStore(model);
         if (body.included) {
             model.syncRelationships(body.data, body.included, 0);
@@ -226,58 +278,6 @@ var JsonApiDatastore = (function () {
         return model;
     };
     ;
-    JsonApiDatastore.getRelationships = function (data) {
-        var relationships = {};
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                if (data[key] instanceof json_api_model_1.JsonApiModel) {
-                    var relationshipType = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
-                    relationships[key] = {
-                        data: {
-                            type: relationshipType,
-                            id: data[key].id
-                        }
-                    };
-                }
-            }
-        }
-        return relationships;
-    };
-    JsonApiDatastore.handleError = function (error) {
-        var errMsg = (error.message) ? error.message :
-            error.status ? error.status + " - " + error.statusText : 'Server error';
-        try {
-            var body = error.json();
-            if (body.errors && body.errors instanceof Array) {
-                var errors = new error_response_model_1.ErrorResponse(body.errors);
-                console.error(errMsg, errors);
-                return Observable_1.Observable.throw(errors);
-            }
-        }
-        catch (e) {
-            // no valid JSON
-        }
-        console.error(errMsg);
-        return Observable_1.Observable.throw(errMsg);
-    };
-    JsonApiDatastore.fromArrayToHash = function (models) {
-        var modelsArray = models instanceof Array ? models : [models];
-        return _.keyBy(modelsArray, 'id');
-    };
-    //noinspection JSUnusedLocalSymbols
-    JsonApiDatastore.resetMetadataAttributes = function (res, attributesMetadata, modelType) {
-        attributesMetadata = res[symbols_1.AttributeMetadata];
-        for (var propertyName in attributesMetadata) {
-            if (attributesMetadata.hasOwnProperty(propertyName)) {
-                var metadata = attributesMetadata[propertyName];
-                if (metadata.hasDirtyAttributes) {
-                    metadata.hasDirtyAttributes = false;
-                }
-            }
-        }
-        res[symbols_1.AttributeMetadata] = attributesMetadata;
-        return res;
-    };
     JsonApiDatastore.prototype.setBaseUrl = function (baseUrl) {
         Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl = baseUrl;
     };

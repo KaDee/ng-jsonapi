@@ -8,12 +8,18 @@ import { JsonApiModel } from '../models/json-api.model';
 import { DocumentModel } from '../models/document.model';
 import { CollectionModel } from '../models/collection.model';
 export declare type ModelType<T extends JsonApiModel> = {
-    new (datastore: JsonApiDatastore, data: any): T;
+    new (data: any): T;
 };
 export declare class JsonApiDatastore {
     protected http: Http;
     private _headers;
     private _store;
+    static makeUrl(url: string, params?: any): string;
+    static toQueryString(params: any): string;
+    private static getRelationships(data);
+    protected static handleError(error: any): ErrorObservable;
+    private static fromArrayToHash(models);
+    private static resetMetadataAttributes<T>(res, attributesMetadata, modelType);
     constructor(http: Http);
     query<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, headers?: Headers): Observable<CollectionModel<T>>;
     hasManyLink<T extends JsonApiModel>(modelType: ModelType<T>, url: string, params?: any, headers?: Headers): Observable<CollectionModel<T>>;
@@ -27,16 +33,10 @@ export declare class JsonApiDatastore {
     headers: Headers;
     addToStore(models: JsonApiModel | JsonApiModel[]): void;
     private buildUrl<T>(modelType, params?, id?);
-    static makeUrl(url: string, params?: any): string;
-    static toQueryString(params: any): string;
     private extractQueryData<T>(res, modelType);
     private extractRecordData<T>(res, modelType, model?);
     getOptions(customHeaders?: Headers): RequestOptions;
     private updateRelationships(model, relationships);
-    private static getRelationships(data);
-    protected static handleError(error: any): ErrorObservable;
-    private static fromArrayToHash(models);
-    private static resetMetadataAttributes<T>(res, attributesMetadata, modelType);
     setBaseUrl(baseUrl: string): void;
     getBaseUrl(): string;
 }

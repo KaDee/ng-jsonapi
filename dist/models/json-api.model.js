@@ -4,8 +4,7 @@ var _ = require("lodash");
 var links_model_1 = require("./links.model");
 var symbols_1 = require("../constants/symbols");
 var JsonApiModel = (function () {
-    function JsonApiModel(_datastore, data) {
-        this._datastore = _datastore;
+    function JsonApiModel(data) {
         this._links = new links_model_1.LinksModel;
         if (data) {
             this.id = data.id;
@@ -140,15 +139,11 @@ var JsonApiModel = (function () {
             }
             return newObject;
         }
-        return this._datastore.peekRecord(modelType, id);
+        return null;
+        // return this._datastore.peekRecord<T>(modelType, id);
     };
     JsonApiModel.prototype.createOrPeek = function (modelType, data) {
-        var peek = this._datastore.peekRecord(modelType, data.id);
-        if (peek) {
-            return peek;
-        }
-        var newObject = new modelType(this._datastore, data);
-        this._datastore.addToStore(newObject);
+        var newObject = new modelType(data);
         return newObject;
     };
     return JsonApiModel;
